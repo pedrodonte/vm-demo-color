@@ -5,8 +5,11 @@ function App() {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
+    console.log("imagen cargando");
     img.src = imagen;
+    //"https://2j70j0vn5g.execute-api.us-east-2.amazonaws.com/default/8ed98e3958754b95aa0d84c3025a31bb_original.jpg";
     img.onload = () => {
+      console.log("imagen cargada");
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
 
