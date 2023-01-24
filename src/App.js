@@ -1,24 +1,72 @@
-import logo from './logo.svg';
-import './App.css';
-
+import imagen from "./assets/roberto.jpg";
+import { useEffect } from "react";
 function App() {
+  const cargarImagen = () => {
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = imagen;
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+
+    // Añadir evento para extraer pixel
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const pixel = ctx.getImageData(x, y, 1, 1);
+      const data = pixel.data;
+      const rgba = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3]})`;
+      document.getElementById("hovered-color").style.backgroundColor = rgba;
+    });
+
+    // Añadir evento para extraer pixel al hacer click
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const pixel = ctx.getImageData(x, y, 1, 1);
+      const data = pixel.data;
+      const rgba = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3]})`;
+      document.getElementById("selected-color").style.backgroundColor = rgba;
+    });
+  };
+
+  useEffect(() => {
+    cargarImagen();
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Hovered color</th>
+          <th>Selected color</th>
+          <th>imagen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <canvas id="canvas" width="500" height="500"></canvas>
+          </td>
+          <td class="color-cell" id="hovered-color"></td>
+          <td class="color-cell" id="selected-color"></td>
+          <td>
+            {" "}
+            <button
+              onClick={() => {
+                cargarImagen();
+              }}
+            >
+              Dibujar imagen
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 }
 
