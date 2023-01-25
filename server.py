@@ -46,7 +46,73 @@ def convert_rgb_to_hsv(rgb_string_with_comas):
     return [lower_yellow, upper_yellow]
 
 
+def buscar_contornos(imagen_de_interes):
+    contours, hierarchy = cv2.findContours(
+        imagen_de_interes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
+
+
+def dibujar_contornos_segun_color(imagen_url, color_hsv):
+    img = cv2.imread(imagen_url)
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv_img, color_hsv[0], color_hsv[1])
+
+    imagen_restada = cv2.bitwise_and(
+        img, img, mask=mask)
+    imagen_restada = cv2.cvtColor(imagen_restada, cv2.COLOR_BGR2RGB)
+    # Aplicar contornos
+    contornos = buscar_contornos(mask)
+    for contorno in contornos:
+        area = cv2.contourArea(contorno)
+        if area > 50:
+            cv2.drawContours(img, contornos, -1, (100, 0, 100), 3)
+
+    filename = 'resultado_'+create_id_from_timestamp() + '.jpg'
+
+    cv2.imwrite(filename, img)
+
+    return filename
+
+
+amarillo_bajo_1 = np.array([7, 70, 0])
+amarillo_alto_1 = np.array([180, 255, 255])
+amarillo_bajo_2 = np.array([20, 26, 0])
+amarillo_alto_2 = np.array([37, 255, 255])
+amarillo_bajo_4 = np.array([0, 25, 0])
+amarillo_alto_4 = np.array([180, 255, 255])
+rangos_amarillos = [[amarillo_bajo_1, amarillo_alto_1], [
+    amarillo_bajo_2, amarillo_alto_2], [amarillo_bajo_4, amarillo_alto_4]]
+
+
+def metodo_3(imagen_url, color_hsv):
+    img = cv2.imread(imagen_url)
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    imagenes_procesadas = []
+
+    for rango_amarillo in rangos_amarillos:
+        mask = cv2.inRange(hsv_img, rango_amarillo[0], rango_amarillo[1])
+
+        imagen_restada = cv2.bitwise_and(
+            img, img, mask=mask)
+        imagen_restada = cv2.cvtColor(imagen_restada, cv2.COLOR_BGR2RGB)
+        # Aplicar contornos
+        contornos = buscar_contornos(mask)
+        for contorno in contornos:
+            area = cv2.contourArea(contorno)
+            if area > 50:
+                cv2.drawContours(img, contornos, -1, (100, 0, 100), 3)
+
+        filename = 'resultado_'+create_id_from_timestamp() + '.jpg'
+
+        cv2.imwrite(filename, img)
+        imagenes_procesadas.append(filename)
+
+    return imagenes_procesadas
+
+
 def calibrate_yellow(imagen_url, color_hsv):
+
     img = cv2.imread(imagen_url)
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv_img, color_hsv[0], color_hsv[1])
@@ -71,11 +137,31 @@ def index():
     rgb_color = request.form['rgbColor']
 
     hcv = convert_rgb_to_hsv(rgb_color)
-    filename = calibrate_yellow('image.jpg', hcv)
+    filename = dibujar_contornos_segun_color('image.jpg', hcv)
     return {
         'message': 'Image uploaded successfully',
         'rango_hsv': str(hcv),
         'image_url': url_for('uploaded_file', filename=filename)
+    }
+
+
+@ app.route('/upload-tres', methods=['POST'])
+def index_dos():
+    # the data is a multipart/form-data request
+    my_imagen = request.files['myImage']
+    my_imagen.save('image.jpg')
+    rgb_color = request.form['rgbColor']
+
+    hcv = convert_rgb_to_hsv(rgb_color)
+    imagenes = metodo_3('image.jpg', hcv)
+    links_imagenes = []
+    for imagen in imagenes:
+        links_imagenes.append(url_for('uploaded_file', filename=imagen))
+    return {
+        'message': 'Image uploaded successfully',
+        'rango_hsv': str(hcv),
+        'image_url': '',
+        'links_imagenes': links_imagenes
     }
 
 

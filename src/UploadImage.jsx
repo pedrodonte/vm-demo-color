@@ -1,10 +1,11 @@
 import { useState } from "react";
 function UploadImage() {
-  const upload_url = "http://localhost:5000/upload";
+  const upload_url = "http://localhost:5000/upload-tres";
   const [selectedImage, setSelectedImage] = useState(null);
   const [rgbColor, setRgbColor] = useState(null);
   const [imagenResult, setImagenResult] = useState(null);
   const [rango_hsv, setRango_hsv] = useState(null);
+  const [imagenes, setImagenes] = useState([]);
 
   const uploadImage = async () => {
     const formData = new FormData();
@@ -19,6 +20,7 @@ function UploadImage() {
       console.log(data);
       setImagenResult(data.image_url);
       setRango_hsv(data.rango_hsv);
+      setImagenes(data.links_imagenes);
     } catch (err) {
       console.error(err);
     }
@@ -120,6 +122,17 @@ function UploadImage() {
         </tbody>
       </table>
       <br />
+      <ul>
+        {imagenes.map((imagen) => (
+          <li key={imagen}>
+            <img
+              alt="not fount"
+              width={"500px"}
+              src={"http://localhost:5000/" + imagen}
+            />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
