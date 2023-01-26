@@ -83,14 +83,19 @@ amarillo_alto_4 = np.array([180, 255, 255])
 rangos_amarillos = [[amarillo_bajo_1, amarillo_alto_1], [
     amarillo_bajo_2, amarillo_alto_2], [amarillo_bajo_4, amarillo_alto_4]]
 
+AMARILLO = (0, 255, 255)
 
-def metodo_3(imagen_url, color_hsv):
+
+def metodo_3(imagen_url):
     img = cv2.imread(imagen_url)
+    area_total_imagen = img.shape[1] * img.shape[0]
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     imagenes_procesadas = []
 
     for rango_amarillo in rangos_amarillos:
+        copia = img.copy()
+        area_total = 0
         mask = cv2.inRange(hsv_img, rango_amarillo[0], rango_amarillo[1])
 
         imagen_restada = cv2.bitwise_and(
@@ -98,14 +103,28 @@ def metodo_3(imagen_url, color_hsv):
         imagen_restada = cv2.cvtColor(imagen_restada, cv2.COLOR_BGR2RGB)
         # Aplicar contornos
         contornos = buscar_contornos(mask)
-        for contorno in contornos:
-            area = cv2.contourArea(contorno)
-            if area > 50:
-                cv2.drawContours(img, contornos, -1, (100, 0, 100), 3)
 
+        for i in range(len(contornos)):
+            CID = i
+
+            area = cv2.contourArea(contornos[i])
+            if area > 50:
+                cv2.drawContours(copia, contornos, CID, AMARILLO, -1)
+
+                ROJO = (0, 0, 255)
+                area_total += area
+
+        calculo_area = round(area_total / area_total_imagen * 100, 2)
+        ley_cobre = round((area_total/area_total_imagen)*100*0.34, 2)
+        texto = 'Area: {}%'.format(calculo_area)
+        texto_ley_cobre = 'Ley de cobre: {}%'.format(ley_cobre)
+        cv2.putText(copia, texto, (10, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, ROJO, 4, cv2.LINE_AA)
+        cv2.putText(copia, texto_ley_cobre, (10, 100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, ROJO, 4, cv2.LINE_AA)
         filename = 'resultado_'+create_id_from_timestamp() + '.jpg'
 
-        cv2.imwrite(filename, img)
+        cv2.imwrite(filename, copia)
         imagenes_procesadas.append(filename)
 
     return imagenes_procesadas
@@ -147,25 +166,25 @@ def index():
 
 @ app.route('/upload-tres', methods=['POST'])
 def index_dos():
+    links_imagenes = []
     # the data is a multipart/form-data request
     my_imagen = request.files['myImage']
     my_imagen.save('image.jpg')
-    rgb_color = request.form['rgbColor']
 
-    hcv = convert_rgb_to_hsv(rgb_color)
-    imagenes = metodo_3('image.jpg', hcv)
-    links_imagenes = []
+    imagenes = metodo_3('image.jpg')
+
     for imagen in imagenes:
         links_imagenes.append(url_for('uploaded_file', filename=imagen))
     return {
         'message': 'Image uploaded successfully',
-        'rango_hsv': str(hcv),
+
         'image_url': '',
-        'links_imagenes': links_imagenes
+        'links_imagenes': links_imagenes,
+        'imagen_original': url_for('uploaded_file', filename='image.jpg')
     }
 
 
-@app.route('/imagen/<filename>')
+@ app.route('/imagen/<filename>')
 def uploaded_file(filename):
     return send_from_directory('.', filename)
 

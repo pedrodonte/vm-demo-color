@@ -6,8 +6,10 @@ function UploadImage() {
   const [imagenResult, setImagenResult] = useState(null);
   const [rango_hsv, setRango_hsv] = useState(null);
   const [imagenes, setImagenes] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const uploadImage = async () => {
+    setLoading(true);
     const formData = new FormData();
     formData.append("myImage", selectedImage);
     formData.append("rgbColor", rgbColor);
@@ -24,6 +26,7 @@ function UploadImage() {
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
 
   return (
@@ -87,6 +90,9 @@ function UploadImage() {
           </button>
         </div>
       )}
+
+      <br />
+      {loading && <h1>Loading...</h1>}
       <table>
         <thead>
           <tr>
